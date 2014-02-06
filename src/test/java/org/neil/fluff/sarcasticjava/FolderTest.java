@@ -1,6 +1,6 @@
 package org.neil.fluff.sarcasticjava;
 
-/** I don't know what this class is, but it's not a folder. */
+/** Some sample code showing how to use a sarcastic class and method. */
 public class FolderTest {
     @Test public void useTheSarcasticTypes() throws Exception {
         // Create a Folder
