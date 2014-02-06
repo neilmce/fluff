@@ -39,7 +39,7 @@ public class Sorting
         
         System.out.println(set);
         
-        // No mutate one of the values.
+        // Now mutate one of the values.
         three.setNumber(-2);
         System.out.println(set);
         
