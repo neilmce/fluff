@@ -175,6 +175,21 @@ public class IndexedCollection<T extends Serializable>
     /** {@inheritDoc} */
     @Override public Iterator<T> iterator()     { return entries.iterator(); }
     
+    /** Get an iterator over the values in this collection, sorted by the values of the specified field name.
+     *
+     * @param fieldName the name of the field in the Java object {@code <T>} by whose values the sort is required.
+     * @return a sorted set of collection entries.
+     * @throws IllegalArgumentException if the specified fieldName is not indexed.
+     */
+    public Iterator<T> iteratorSortedBy(String fieldName) {
+        final IndexedField<T> indexedField = indexedFields.get(fieldName);
+        if (indexedField == null) { throw new IllegalArgumentException("Cannot get an iterator sorted by '" +
+                                                                       fieldName + "' as it is not indexed."); }
+        
+        final List<T> sortedList = sortedViews.get(indexedField);
+        return sortedList.iterator();
+    }
+    
     /** {@inheritDoc} */
     @Override public Object[] toArray()         { return entries.toArray(); }
     

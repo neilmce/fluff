@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import org.junit.Test;
@@ -62,6 +63,10 @@ public class IndexedCollectionTest {
         ic.add(item1);
         
         ic.add(item2);
+    }
+    
+    @Test(expected=IllegalArgumentException.class) public void getIteratorByNonExistentField() {
+        NO_INDEXES_COLLECTION.iteratorSortedBy("hello");
     }
     
     @Test public void aCollectionWithNoIndexesIsWastefulButStillWorks() {
