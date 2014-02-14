@@ -47,7 +47,9 @@ public class IndexedCollection<T extends Serializable>
      * This class represents the name of a field declared in {@code <T>} along with an indication
      * of whether that field should have a unique value within this collection.
      */
-    public static class IndexedField<T> {
+    public static class IndexedField<T> implements Serializable {
+        private static final long serialVersionUID = 1L;
+        
         private final String  fieldNameToIndex;
         private final boolean isValueUnique;
         
@@ -132,7 +134,8 @@ public class IndexedCollection<T extends Serializable>
                 return middle;
             }
         }
-        throw new IllegalArgumentException("Illegal low, high limits:" + lowLimit + "," + highLimit);
+        // Not found.
+        return -1;
     }
     
     @SuppressWarnings({ "rawtypes" })
