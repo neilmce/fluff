@@ -5,6 +5,7 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,13 +18,16 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -34,8 +38,10 @@ import org.junit.rules.TemporaryFolder;
  * Some notes from running this on Mac OS X 10.7.5 with Java 1.7
  * <ul>
  * <li>You only receive events for changes directly within a watched folder, not at arbitrary depth.</li>
+ * <li>I've watched 16000 folders and created one file in each of those and it behaved as expected and quickly.
+ *     See {@link #watchLargeNumberOfFolders()}.</li>
  * <li>It seems to take just under 10s (and occasionally just under 5s) to receive notification
- *     of a file creation in a watched folder. See {@link #watchEmptyFileCreation()}</li>
+ *     of a single file creation in a watched folder. See {@link #watchEmptyFileCreation()}</li>
  * </ul>
  */
 public class WatchServiceUsage {
@@ -59,7 +65,7 @@ public class WatchServiceUsage {
         final Path folder = createFolder("watchedFolder");
         
         // ...start watching it...
-        watchFolder(folder);
+        final WatchKey watchKey = watchFolder(folder);
         
         // ... create a file within that folder.
         final String fileName = "newFile.txt";
@@ -70,6 +76,8 @@ public class WatchServiceUsage {
         
         // ... take the next event (blocking call)...
         WatchKey nextEvent = watcher.take();
+        // note that we get the same WatchKey object as we got at registration.
+        assertSame(watchKey, nextEvent);
         final long eventNotificationTime = System.currentTimeMillis();
         
         LOG.info("It took " + (eventNotificationTime - fileCreationTime) + " ms for the file-create event to appear.");
@@ -91,6 +99,7 @@ public class WatchServiceUsage {
         assertEquals(Paths.get(fileName) ,event.context());
     }
     
+    // TODO create non-empty file
     // TODO modification (content) in a folder
     // TODO rename in a folder
     // TODO delete in a folder
@@ -106,8 +115,46 @@ public class WatchServiceUsage {
     // TODO fast chain of conflicting renames in watched folder
     // TODO move out of watched folder
     // TODO move into watched folder
-    // TODO create non-empty file
     // TODO slowly append new content to file
+    // TODO move file between two watched folders
+    // TODO add multiple watches to the same folder - legal?
+    // TODO link files
+    // TODO hidden files
+    // TODO file permissions - can user see changes on files they have no permission to see? Or rather: what happens?
+    // TODO Load tests - large numbers of creates, deletes, modifications-to-single-file, modifications-to-many-files - within one WatchKey.
+    // TODO unwatching while events are pending?
+    
+    /** This test method checks that it is possible to watch large numbers of folders. */
+    @Ignore("Ignored because it generates a lot of logging, but this passes just fine.")
+    @Test public void watchLargeNumberOfFolders() throws Exception {
+        final int folderCount = 128;
+        
+        Map<Path, WatchKey> watchedFolders = new HashMap<>();
+        
+        // Create and watch all these folders.
+        for (int i = 0; i < folderCount; i++) {
+            final Path folder = createFolder("watchedFolder" + i);
+            
+            watchedFolders.put(folder, watchFolder(folder));
+        }
+        
+        // Then create an empty file in each of them.
+        for (Path folder : watchedFolders.keySet()) {
+            createEmptyFile(folder, "file.txt");
+        }
+        
+        // How many single events did we receive from all these folders?
+        int eventsReceived = 0;
+        for (int i = 0; i < folderCount; i++) {
+            WatchKey nextWatchKey = watcher.take();
+            List<WatchEvent<?>> events = nextWatchKey.pollEvents();
+            assertEquals(1, events.size());
+            eventsReceived++;
+        }
+        
+        // It should be one per folder.
+        assertEquals(folderCount, eventsReceived);
+    }
     
     private WatchKey watchFolder(final Path folder) throws IOException {
         LOG.debug("Adding watch to folder " + folder);
