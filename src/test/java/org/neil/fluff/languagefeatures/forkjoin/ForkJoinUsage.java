@@ -80,7 +80,6 @@ public class ForkJoinUsage {
         // which would run the task asynchronously.
         // Calling join() on the task will then block for a result.
         forkJoinPool.invoke(task);
-        forkJoinPool.submit(task);
         
         // At this scale of input the execution time will probably be the same. But for genuinely
         // large inputs and a multi-core machine, a ForkJoinPool should make better use of the cpu
