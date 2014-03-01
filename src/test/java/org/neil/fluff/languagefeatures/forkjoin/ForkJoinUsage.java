@@ -44,7 +44,12 @@ public class ForkJoinUsage {
         this.forkJoinPool = ForkJoinPool.commonPool();
     }
     
+    /** A RecursiveTask is a ForkJoinTask that has an explicit return type. */
+    @Test public void howToUseRecursiveTask() {
+        // TODO
+    }
     
+    /** A RecursiveAction is a ForkJoinTask that does not have an explicit return type. */
     @Test public void howToUseRecursiveAction() {
         // Let's do a simple example. We want to sort a 'large' list, but we're
         // going to use divide & conquer to do it i.e. recursively sorting sublists
@@ -70,7 +75,12 @@ public class ForkJoinUsage {
         // And we can produce the same result using a ForkJoinTask.
         final StringSorter task = new StringSorter(input);
         LOG.debug("About to add new task to the ForkJoinPool: " + task);
+        
+        // invoke() is a blocking call. We could alternatively call execute() or submit()
+        // which would run the task asynchronously.
+        // Calling join() on the task will then block for a result.
         forkJoinPool.invoke(task);
+        forkJoinPool.submit(task);
         
         // At this scale of input the execution time will probably be the same. But for genuinely
         // large inputs and a multi-core machine, a ForkJoinPool should make better use of the cpu
